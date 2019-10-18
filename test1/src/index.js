@@ -1,38 +1,43 @@
 import ReactDOM from "react-dom"
-import React from "react"
-import { Canvas, useThree } from "react-three-fiber"
+import React, { useRef, useState } from "react"
+import { Canvas, useThree, useFrame } from "react-three-fiber"
 import { useDrag } from "react-use-gesture"
 import { useSpring, a } from "react-spring/three"
 import "./index.css"
 
-function Obj() {
-  const { size, viewport } = useThree()
-  const aspect = size.width / viewport.width
-  //const [spring, set] = useSpring(() => ({ position: [0, 0, 0], config: { mass: 4, friction: 50, tension: 1500 } }))
-  const set = (x, y) => {
-    console.log(x);
-  };
-  const bind = useDrag(({ offset: [x, y] }) => set({ position: [x / aspect, -y / aspect, 0] }), { pointerEvents: true })
+function Thing() {
+    const ref = useRef()
+    const [color, setColor] = useState("hotpink");
 
-  return (
-    <React.Fragment>
-    <a.mesh {...bind()}>
-      <dodecahedronBufferGeometry attach="geometry" />
-      <meshNormalMaterial attach="material" />
-    </a.mesh>
-    <mesh receiveShadow>
-      <planeBufferGeometry attach="geometry" args={[1000, 1000]} />
-      <meshPhongMaterial attach="material" color="#272727" />
-    </mesh>
-    </React.Fragment>
-  )
+    useFrame(() => {
+        ref.current.rotation.z += 0.01
+
+        if (ref.current.rotation.x < 1.5) {
+            ref.current.rotation.x += 0.01
+        } else {
+            ref.current.rotation.x += 0.01
+        }
+    })
+    return (
+        <mesh
+            ref={ref}
+            onClick={e => setColor("red")}
+            onPointerOver={e => console.log('hover')}
+            onPointerOut={e => console.log('unhover')}>
+            
+            <dodecahedronBufferGeometry attach="geometry" />
+            <meshLambertMaterial attach="material" color={color} />
+            
+        </mesh>
+    )
 }
 
 ReactDOM.render(
-  <Canvas>
-    <Obj />
-  </Canvas>,
-  document.getElementById("root")
+    <Canvas>
+        <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
+        <Thing />
+    </Canvas>,
+    document.getElementById("root")
 )
 
 
