@@ -42,7 +42,7 @@ function DraggableDodecahedron() {
 
 ReactDOM.render(
     <Canvas>
-        <spotLight intensity={1.0} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
+        <spotLight intensity={1.2} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
         <DraggableDodecahedron />
     </Canvas>,
     document.getElementById("root")

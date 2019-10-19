@@ -10,11 +10,15 @@
     "react-use-gesture": "6.0.2-beta.1",
     "three": "0.103.0"
   },
+  "devDependencies": {
+    "surge": "^0.21.3"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "surge"
   },
   "eslintConfig": {
     "extends": "react-app"
