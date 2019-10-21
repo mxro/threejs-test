@@ -20,7 +20,7 @@ export function Provider({ children }) {
 }
 
 // Custom hook to maintain a world physics body
-export function useCannon({ bodyProps: { ...props } }, fn) {
+export function useCannon({ bodyProps: { ...props } }, fn, deps = []) {
     const ref = useRef()
     // Get cannon world object
     const world = useContext(context)
@@ -33,13 +33,13 @@ export function useCannon({ bodyProps: { ...props } }, fn) {
         world.addBody(body)
         // Remove body on unmount
         return () => world.removeBody(body)
-    })
+    }, deps)
 
     useRender(() => {
         if (ref.current) {
             // Transport cannon physics into the referenced threejs object
-            ref.current.position.copy(body.position)
-            ref.current.quaternion.copy(body.quaternion)
+            // ref.current.position.copy(body.position)
+            // ref.current.quaternion.copy(body.quaternion)
         }
     })
 

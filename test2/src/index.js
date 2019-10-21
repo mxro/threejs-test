@@ -9,29 +9,46 @@ import { useCannon, Provider } from './useCannon';
 
 function DraggableDodecahedron({ position: initialPosition }) {
     const { size, viewport } = useThree();
+    const [position, setPosition] = useState(initialPosition);
+    const [quaternion, setQuaternion] = useState(new THREE.Quaternion());
     const aspect = size.width / viewport.width;
 
     const { ref, body } = useCannon({ bodyProps: { mass: 100000 } }, body => {
         body.addShape(new CANNON.Box(new CANNON.Vec3(1, 1, 1)))
-        body.position.set(...initialPosition)
-    });
+        body.position.set(...position);
+        console.log('init cannon');
+    }, []);
 
-    const bind = useDrag(({ offset: [x, y], active }) => {
+    const bind = useDrag(({ offset: [, ], xy: [x, y], first, last }) => {
+         
         console.log('dragging');
-        if (active) {
+        console.log(body.position);
+        console.log(position);
+        if (first) {
             body.mass = 0;
             body.updateMassProperties();
-        } else {
+        } else if (last) {
             body.mass = 10000;
             body.updateMassProperties();
         }
-        body.position.set(x / aspect, -y / aspect, -0.7);
+        console.log(`x: ${x}`);
+        console.log(`y: ${y}`);
+        console.log(`size.width: ${size.width}`);
+        body.position.set((x - size.width / 2) / aspect, -(y - size.height / 2) / aspect, -0.7);
+        console.log('dragging after set');
+        console.log(body.position);
+        console.log(position);
     }, { pointerEvents: true });
 
     useFrame(() => {
+        //if (ref.current) {
+            //console.log(body.position);
+            setPosition(body.position.clone().toArray());
+            // setQuaternion(body.quaternion.clone());
+        //}
     });
     return (
-        <mesh ref={ref} castShadow position={initialPosition} {...bind()}
+        <mesh ref={ref} castShadow position={position} {...bind()}
             onClick={e => {
                 e.stopPropagation();
                 console.log('clicked object');
@@ -68,7 +85,7 @@ function Objects({ objects, addObject }) {
 function App() {
 
     const [objects, setObjects] = useState([
-        <DraggableDodecahedron position={[0, 0, 0]} key={Math.random()} />
+        // <DraggableDodecahedron position={[0, 0, 0]} key={Math.random()} />
     ]);
 
     const { mouse, camera } = useThree();
