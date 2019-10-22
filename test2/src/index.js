@@ -10,20 +10,15 @@ import { useCannon, Provider } from './useCannon';
 function DraggableDodecahedron({ position: initialPosition }) {
     const { size, viewport } = useThree();
     const [position, setPosition] = useState(initialPosition);
-    const [quaternion, setQuaternion] = useState(new THREE.Quaternion());
+    const [quaternion, setQuaternion] = useState([0,0,0,0]);
     const aspect = size.width / viewport.width;
 
     const { ref, body } = useCannon({ bodyProps: { mass: 100000 } }, body => {
         body.addShape(new CANNON.Box(new CANNON.Vec3(1, 1, 1)))
         body.position.set(...position);
-        console.log('init cannon');
     }, []);
 
     const bind = useDrag(({ offset: [, ], xy: [x, y], first, last }) => {
-         
-        console.log('dragging');
-        console.log(body.position);
-        console.log(position);
         if (first) {
             body.mass = 0;
             body.updateMassProperties();
@@ -31,24 +26,26 @@ function DraggableDodecahedron({ position: initialPosition }) {
             body.mass = 10000;
             body.updateMassProperties();
         }
-        console.log(`x: ${x}`);
-        console.log(`y: ${y}`);
-        console.log(`size.width: ${size.width}`);
         body.position.set((x - size.width / 2) / aspect, -(y - size.height / 2) / aspect, -0.7);
-        console.log('dragging after set');
-        console.log(body.position);
-        console.log(position);
     }, { pointerEvents: true });
 
     useFrame(() => {
-        //if (ref.current) {
-            //console.log(body.position);
+        // Sync cannon body position with three js
+        const deltaX = Math.abs(body.position.x - position[0]);
+        const deltaY = Math.abs(body.position.y - position[1]);
+        const deltaZ = Math.abs(body.position.z - position[2]);
+        if (deltaX > 0.001 || deltaY > 0.001 || deltaZ > 0.001) {
             setPosition(body.position.clone().toArray());
-            // setQuaternion(body.quaternion.clone());
-        //}
+        }
+        const bodyQuaternion = body.quaternion.toArray();
+        const quaternionDelta = bodyQuaternion.map((n, idx) => Math.abs(n-quaternion[idx]))
+          .reduce((acc, curr) => acc + curr);
+        if (quaternionDelta > 0.01) {
+            setQuaternion(body.quaternion.toArray());
+        }
     });
     return (
-        <mesh ref={ref} castShadow position={position} {...bind()}
+        <mesh ref={ref} castShadow position={position} quaternion={quaternion} {...bind()}
             onClick={e => {
                 e.stopPropagation();
                 console.log('clicked object');
