@@ -48,7 +48,6 @@ function DraggableDodecahedron({ position: initialPosition }) {
         <mesh ref={ref} castShadow position={position} quaternion={quaternion} {...bind()}
             onClick={e => {
                 e.stopPropagation();
-                console.log('clicked object');
             }}
         >
 
