@@ -1,0 +1,1 @@
+See blog post [Creating a Draggable Shape with React Three Fiber](https://maxrohde.com/2019/10/19/creating-a-draggable-shape-with-react-three-fiber/)

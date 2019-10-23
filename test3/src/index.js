@@ -6,6 +6,7 @@ import { useDrag } from "react-use-gesture";
 import * as THREE from 'three';
 import "./index.css"
 import { useCannon, Provider } from './useCannon';
+import useEventListener from '@use-it/event-listener';
 
 function DraggableDodecahedron({ position: initialPosition }) {
     const { size, viewport } = useThree();
@@ -78,6 +79,13 @@ function Objects({ objects, addObject }) {
     </React.Fragment>;
 }
 
+const keyPressStart = {
+        'w': 0,
+        's': 0,
+        'd': 0,
+        'a': 0,
+    };
+
 function App() {
 
     const [objects, setObjects] = useState([
@@ -96,13 +104,33 @@ function App() {
         <DraggableDodecahedron position={position} key={Math.random()} />]);
     };
 
-    return <React.Fragment>
+    // https://codepen.io/Fallenstedt/pen/QvKBQo
+
+    const handleKeyDown = (e) => {
+        if (keyPressStart[e.key] === 0) {
+            keyPressStart[e.key] = new Date().getTime();
+        }
+        const duration = new Date().getTime() - keyPressStart[e.key];
+        const momentum = Math.sqrt(duration+200) * 0.01+0.1;
+        switch (e.key) {
+            case 'w': camera.translateY(momentum); break;
+            case 's': camera.translateY(-momentum); break;
+            case 'd': camera.translateX(momentum); break;
+            case 'a': camera.translateX(-momentum); break;
+            default: 
+        }
+    };
+
+    const handleKeyUp = (e) => {
+        keyPressStart[e.key] = 0;
+    };
+
+    useEventListener('keydown', handleKeyDown);
+    useEventListener('keyup', handleKeyUp);
+
+    return <React.Fragment >
         <ambientLight intensity={0.5} />
         <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
-        <mesh position={[0, 0, 0]}>
-            <textGeometry attach="geometry" args={["Click to create objects."]} />
-            <meshNormalMaterial attach="material" />
-        </mesh>
         <Provider>
             <Objects objects={objects}>
             </Objects>
