@@ -9,7 +9,7 @@ import { useCannon, Provider } from './useCannon';
 import useEventListener from '@use-it/event-listener';
 
 function DraggableDodecahedron({ position: initialPosition }) {
-    const { size, viewport } = useThree();
+    const { size, viewport, camera, mouse } = useThree();
     const [position, setPosition] = useState(initialPosition);
     const [quaternion, setQuaternion] = useState([0, 0, 0, 0]);
     const aspect = size.width / viewport.width;
@@ -19,7 +19,7 @@ function DraggableDodecahedron({ position: initialPosition }) {
         body.position.set(...position);
     }, []);
 
-    const bind = useDrag(({ offset: [,], xy: [x, y], first, last }) => {
+    const bind = useDrag(({ event, offset: [,], xy: [x, y], first, last }) => {
         if (first) {
             body.mass = 0;
             body.updateMassProperties();
@@ -27,6 +27,11 @@ function DraggableDodecahedron({ position: initialPosition }) {
             body.mass = 10000;
             body.updateMassProperties();
         }
+        //console.log(mouse);
+        //console.log(event);
+       // const pos = get3DPosition({ screenX: mouse.x, screenY: mouse.y, camera });
+       // console.log(pos);
+        //body.position.set(pos.x, pos.y, -0.7);
         body.position.set((x - size.width / 2) / aspect, -(y - size.height / 2) / aspect, -0.7);
     }, { pointerEvents: true });
 
@@ -79,54 +84,63 @@ function Objects({ objects, addObject }) {
     </React.Fragment>;
 }
 
-const keyPressStart = {
-        'w': 0,
-        's': 0,
-        'd': 0,
-        'a': 0,
-    };
+const keyPressed = {
+};
 
-function App() {
-
-    const [objects, setObjects] = useState([
-        // <DraggableDodecahedron position={[0, 0, 0]} key={Math.random()} />
-    ]);
-
-    const { mouse, camera } = useThree();
-    const onPlaneClick = (e) => {
-        var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+const get3DPosition = ({ screenX, screenY, camera }) => {
+        var vector = new THREE.Vector3(screenX, screenY, 0.5);
         vector.unproject(camera);
         var dir = vector.sub(camera.position).normalize();
         var distance = - camera.position.z / dir.z;
         var pos = camera.position.clone().add(dir.multiplyScalar(distance));
-        const position = [pos.x, pos.y, 2];
+        return [pos.x, pos.y, 0];
+};
+
+function App() {
+
+    const [objects, setObjects] = useState([]);
+
+    const { mouse, camera } = useThree();
+    const onPlaneClick = (e) => {
+        const position = get3DPosition({ screenX: mouse.x, screenY: mouse.y, camera }); 
         setObjects([...objects,
         <DraggableDodecahedron position={position} key={Math.random()} />]);
     };
 
-    // https://codepen.io/Fallenstedt/pen/QvKBQo
-
     const handleKeyDown = (e) => {
-        if (keyPressStart[e.key] === 0) {
-            keyPressStart[e.key] = new Date().getTime();
-        }
-        const duration = new Date().getTime() - keyPressStart[e.key];
-        const momentum = Math.sqrt(duration+200) * 0.01+0.1;
-        switch (e.key) {
-            case 'w': camera.translateY(momentum); break;
-            case 's': camera.translateY(-momentum); break;
-            case 'd': camera.translateX(momentum); break;
-            case 'a': camera.translateX(-momentum); break;
-            default: 
+        if (!keyPressed[e.key]) {
+            keyPressed[e.key] = new Date().getTime();
         }
     };
 
     const handleKeyUp = (e) => {
-        keyPressStart[e.key] = 0;
+        delete keyPressed[e.key];
     };
 
     useEventListener('keydown', handleKeyDown);
     useEventListener('keyup', handleKeyUp);
+
+    useFrame((_, delta) => {
+        // move camera according to key pressed
+        Object.entries(keyPressed).forEach((e) => {
+            const [key, start] = e;
+            const duration = new Date().getTime() - start;
+
+            let momentum = Math.sqrt(duration + 200) * 0.01 + 0.05;
+
+            // adjust for actual time passed
+            momentum = momentum * delta/0.016;
+
+            switch (key) {
+                case 'w': camera.translateY(momentum); break;
+                case 's': camera.translateY(-momentum); break;
+                case 'd': camera.translateX(momentum); break;
+                case 'a': camera.translateX(-momentum); break;
+                default:
+            }
+        });
+    });
+
 
     return <React.Fragment >
         <ambientLight intensity={0.5} />
