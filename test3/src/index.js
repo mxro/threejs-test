@@ -9,10 +9,9 @@ import { useCannon, Provider } from './useCannon';
 import useEventListener from '@use-it/event-listener';
 
 function DraggableDodecahedron({ position: initialPosition }) {
-    const { size, viewport, camera, mouse } = useThree();
+    const { camera, mouse } = useThree();
     const [position, setPosition] = useState(initialPosition);
     const [quaternion, setQuaternion] = useState([0, 0, 0, 0]);
-    const aspect = size.width / viewport.width;
 
     const { ref, body } = useCannon({ bodyProps: { mass: 100000 } }, body => {
         body.addShape(new CANNON.Box(new CANNON.Vec3(1, 1, 1)))
@@ -27,12 +26,8 @@ function DraggableDodecahedron({ position: initialPosition }) {
             body.mass = 10000;
             body.updateMassProperties();
         }
-        //console.log(mouse);
-        //console.log(event);
-       // const pos = get3DPosition({ screenX: mouse.x, screenY: mouse.y, camera });
-       // console.log(pos);
-        //body.position.set(pos.x, pos.y, -0.7);
-        body.position.set((x - size.width / 2) / aspect, -(y - size.height / 2) / aspect, -0.7);
+        const pos = get3DPosition({ screenX: mouse.x, screenY: mouse.y, camera });
+        body.position.set(pos[0], pos[1], -0.7);
     }, { pointerEvents: true });
 
     useFrame(() => {
@@ -72,7 +67,7 @@ function Plane({ position, onPlaneClick }) {
     return (
         <mesh ref={ref} receiveShadow position={position}
             onClick={onPlaneClick}>
-            <planeBufferGeometry attach="geometry" args={[1000, 1000]} />
+            <planeBufferGeometry attach="geometry" args={[10000, 10000]} />
             <meshPhongMaterial attach="material" color="#272727" />
         </mesh>
     )
@@ -84,16 +79,17 @@ function Objects({ objects, addObject }) {
     </React.Fragment>;
 }
 
-const keyPressed = {
-};
 
 const get3DPosition = ({ screenX, screenY, camera }) => {
-        var vector = new THREE.Vector3(screenX, screenY, 0.5);
-        vector.unproject(camera);
-        var dir = vector.sub(camera.position).normalize();
-        var distance = - camera.position.z / dir.z;
-        var pos = camera.position.clone().add(dir.multiplyScalar(distance));
-        return [pos.x, pos.y, 0];
+    var vector = new THREE.Vector3(screenX, screenY, 0.5);
+    vector.unproject(camera);
+    var dir = vector.sub(camera.position).normalize();
+    var distance = - camera.position.z / dir.z;
+    var pos = camera.position.clone().add(dir.multiplyScalar(distance));
+    return [pos.x, pos.y, 0];
+};
+
+const keyPressed = {
 };
 
 function App() {
@@ -102,7 +98,7 @@ function App() {
 
     const { mouse, camera } = useThree();
     const onPlaneClick = (e) => {
-        const position = get3DPosition({ screenX: mouse.x, screenY: mouse.y, camera }); 
+        const position = get3DPosition({ screenX: mouse.x, screenY: mouse.y, camera });
         setObjects([...objects,
         <DraggableDodecahedron position={position} key={Math.random()} />]);
     };
@@ -117,19 +113,36 @@ function App() {
         delete keyPressed[e.key];
     };
 
+    const mouseWheel = (e) => {
+        let delta = e.wheelDelta;
+        delta = delta / 240;
+        delta = -delta;
+        if (delta <= 0) {
+            delta -= camera.position.z * 0.1;
+        } else {
+            delta += camera.position.z * 0.1;
+        }
+        if (camera.position.z + delta > 1 && camera.position.z + delta < 200) {
+            camera.translateZ(delta);
+        }
+    };
     useEventListener('keydown', handleKeyDown);
     useEventListener('keyup', handleKeyUp);
-
+    useEventListener('wheel', mouseWheel);
     useFrame((_, delta) => {
         // move camera according to key pressed
         Object.entries(keyPressed).forEach((e) => {
             const [key, start] = e;
             const duration = new Date().getTime() - start;
 
+            // increase momentum if key pressed longer
             let momentum = Math.sqrt(duration + 200) * 0.01 + 0.05;
 
             // adjust for actual time passed
-            momentum = momentum * delta/0.016;
+            momentum = momentum * delta / 0.016;
+
+            // increase momentum if camera higher
+            momentum = momentum + camera.position.z * 0.02;
 
             switch (key) {
                 case 'w': camera.translateY(momentum); break;
@@ -144,7 +157,7 @@ function App() {
 
     return <React.Fragment >
         <ambientLight intensity={0.5} />
-        <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
+        <spotLight intensity={0.5} position={[0, -20, 30]} angle={Math.PI / 3} penumbra={1} />
         <Provider>
             <Objects objects={objects}>
             </Objects>
