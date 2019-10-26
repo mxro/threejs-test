@@ -9,9 +9,9 @@ import { useCannon, Provider } from './useCannon';
 import useEventListener from '@use-it/event-listener';
 import DraggableDodecahedron from './DraggableDodecahedron.js';
 import { get3DPosition } from './position-utils.js';
-import { Vector2 } from "three";
+import { Vector2, Vector3 } from "three";
 
-function Plane({ position, onPlaneClick, onCameraMoved }) {
+function Plane({ position, onPlaneClick }) {
     const { ref } = useCannon({ bodyProps: { mass: 0 } }, body => {
         body.addShape(new CANNON.Plane())
         body.position.set(...position)
@@ -33,7 +33,6 @@ function Plane({ position, onPlaneClick, onCameraMoved }) {
                 <meshPhongMaterial attach="material" map={texture} />
             }
 
-            {/* <meshPhongMaterial attach="material" color={"#55555"} /> */}
         </mesh>
     )
 }
@@ -44,7 +43,6 @@ function Objects({ objects }) {
     </React.Fragment>;
 }
 
-
 const keyPressed = {
 };
 
@@ -54,12 +52,14 @@ function App() {
 
     const { mouse, camera } = useThree();
 
-    const [lightPosition, setLightPosition] = useState([0, -160, 100]);
+    const lightTargetYDelta = 120;
+    const lightTargetXDelta = 80;
+    const [lightPosition, setLightPosition] = useState([-lightTargetXDelta, -lightTargetYDelta, 200]);
     const [lightTargetPosition, setLightTargetPosition] = useState([0, 0, 0]);
     const onCameraMoved = (delta) => {
         const newLightPosition = delta.map((e, idx) => lightPosition[idx] + e);
         setLightPosition(newLightPosition);
-        const newLightTargetPosition = [newLightPosition[0], newLightPosition[1] + 160, 0];
+        const newLightTargetPosition = [newLightPosition[0] + lightTargetXDelta, newLightPosition[1] + lightTargetYDelta, 0];
         setLightTargetPosition(newLightTargetPosition);
     };
 
@@ -91,13 +91,20 @@ function App() {
         if (camera.position.z + delta > 1 && camera.position.z + delta < 200) {
             camera.translateZ(delta);
         }
-        // onCameraMoved([0,0,delta]);
     };
     useEventListener('keydown', handleKeyDown);
     useEventListener('keyup', handleKeyUp);
     useEventListener('wheel', mouseWheel);
-    useFrame((_, delta) => {
-        // move camera according to key pressed
+
+    // move camera according to key pressed
+    const updateCameraPositon = (delta) => {
+
+        // if no key pressed, no update required
+        if (Object.entries(keyPressed).length === 0) {
+            return;
+        }
+        const newCameraPosition = new Vector3();
+        newCameraPosition.copy(camera.position);
         Object.entries(keyPressed).forEach((e) => {
             const [key, start] = e;
             const duration = new Date().getTime() - start;
@@ -113,40 +120,40 @@ function App() {
 
             switch (key) {
                 case 'w':
-                    camera.position.set(camera.position.x, camera.position.y + momentum, camera.position.z);
-                    onCameraMoved([0, momentum, 0]);
+                    newCameraPosition.set(newCameraPosition.x, newCameraPosition.y + momentum, newCameraPosition.z)
                     break;
                 case 's':
-                    camera.position.set(camera.position.x, camera.position.y - momentum, camera.position.z);
-                    onCameraMoved([0, -momentum, 0]);
+                    newCameraPosition.set(newCameraPosition.x, newCameraPosition.y - momentum, newCameraPosition.z);
                     break;
                 case 'd':
-                    camera.position.set(camera.position.x + momentum, camera.position.y, camera.position.z);
-                    onCameraMoved([momentum, 0, 0]);
+                    newCameraPosition.set(newCameraPosition.x + momentum, newCameraPosition.y, newCameraPosition.z);
                     break;
                 case 'a':
-                    camera.position.set(camera.position.x - momentum, camera.position.y, camera.position.z);
-                    onCameraMoved([-momentum, 0, 0]);
+                    newCameraPosition.set(newCameraPosition.x - momentum, newCameraPosition.y, newCameraPosition.z);
                     break;
                 default:
             }
         });
+        const cameraDelta = camera.position.toArray().map((e, idx) => newCameraPosition.toArray()[idx] - e);
+        onCameraMoved(cameraDelta);
+        camera.position.copy(newCameraPosition);
+    };
+
+    useFrame((_, delta) => {
+        updateCameraPositon(delta);
     });
 
-    // const lightRef = useRef();
-    // console.log(lightRef);
     const lightTarget = new THREE.Mesh();
 
     return <React.Fragment >
-        <ambientLight intensity={0.1} />
-        {/* <spotLight intensity={0.6} position={lightPosition} angle={Math.PI / 3} penumbra={1} /> */}
+        <ambientLight intensity={0.7} />
 
         <primitive object={lightTarget} position={lightTargetPosition} />
         <spotLight
             castShadow
-            intensity={0.8}
+            intensity={0.25}
             position={lightPosition}
-            angle={Math.PI / 8}
+            angle={Math.PI / 3}
             penumbra={1}
             shadow-mapSize={new Vector2(2048 * 5, 2048 * 5)}
             target={lightTarget}
