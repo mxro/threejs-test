@@ -8,7 +8,7 @@ import "./index.css"
 import { useCannon } from './useCannon';
 import { get3DPosition } from './position-utils.js';
 
-function DraggableDodecahedron({ position: initialPosition }) {
+function DraggableDodecahedron({ position: initialPosition, material }) {
     const { camera, mouse } = useThree();
     const [position, setPosition] = useState(initialPosition);
     const [quaternion, setQuaternion] = useState([0, 0, 0, 0]);
@@ -18,7 +18,7 @@ function DraggableDodecahedron({ position: initialPosition }) {
         body.position.set(...position);
     }, []);
 
-    const bind = useDrag(({ event, offset: [,], xy: [x, y], first, last }) => {
+    const bind = useDrag(({ offset: [,], xy: [x, y], first, last }) => {
         if (first) {
             body.mass = 0;
             body.updateMassProperties();
@@ -47,24 +47,17 @@ function DraggableDodecahedron({ position: initialPosition }) {
     });
 
 
-    const [texture] = useLoader(TextureLoader, 'textures/stone/Stone_wall_001_COLOR.png');
-
-    if (texture) {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(2, 2);
-        texture.anisotropy = 16;
-    }
+    
     return (
         <mesh ref={ref} castShadow position={position} quaternion={quaternion} {...bind()}
             onClick={e => {
                 e.stopPropagation();
             }}
+            material={material}
         >
 
             <dodecahedronBufferGeometry attach="geometry" />
-            <meshLambertMaterial attach="material" map={texture} />
-
-            {/* <meshLambertMaterial attach="material" color={"yellow"} /> */}
+           
 
         </mesh>
     )

@@ -1,13 +1,14 @@
 import ReactDOM from "react-dom"
 import * as CANNON from "cannon";
-import React, { useState, Suspense, useRef } from "react";
+import React, { useState, Suspense } from "react";
 import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
-import { Canvas, useThree, useFrame, useLoader } from "react-three-fiber"
+import { Canvas, useThree, useFrame, useLoader, useResource } from "react-three-fiber"
 import * as THREE from 'three';
 import "./index.css"
 import { useCannon, Provider } from './useCannon';
 import useEventListener from '@use-it/event-listener';
 import DraggableDodecahedron from './DraggableDodecahedron.js';
+import Spinner from './Spinner.js';
 import { get3DPosition } from './position-utils.js';
 import { Vector2, Vector3 } from "three";
 
@@ -63,10 +64,19 @@ function App() {
         setLightTargetPosition(newLightTargetPosition);
     };
 
+    const [ref, material] = useResource();
+    const [texture] = useLoader(TextureLoader, 'textures/stone/Stone_wall_001_COLOR.png');
+
+    if (texture) {
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2);
+        texture.anisotropy = 16;
+    }
+    // const material = null;
     const onPlaneClick = (e) => {
         const position = get3DPosition({ screenX: mouse.x, screenY: mouse.y, camera });
         setObjects([...objects,
-        <DraggableDodecahedron position={position} key={Math.random()} />]);
+        <DraggableDodecahedron position={position} key={Math.random()} material={material} />]);
     };
 
     const handleKeyDown = (e) => {
@@ -144,9 +154,9 @@ function App() {
     });
 
     const lightTarget = new THREE.Mesh();
-
     return <React.Fragment >
-        <ambientLight intensity={0.7} />
+
+        <ambientLight intensity={0.9} />
 
         <primitive object={lightTarget} position={lightTargetPosition} />
         <spotLight
@@ -159,16 +169,17 @@ function App() {
             target={lightTarget}
         />
         <Provider>
-            <Suspense fallback={(e) => { alert('Cannot load: ' + e.message); }}>
-                <Objects objects={objects}>
-                </Objects>
-                <Plane position={[0, 0, -2]} onPlaneClick={onPlaneClick} />
-            </Suspense>
+            <meshLambertMaterial ref={ref} attach="material" map={texture} />
+            <Objects objects={objects}>
+            </Objects>
+            <Plane position={[0, 0, -2]} onPlaneClick={onPlaneClick} />
 
         </Provider>
     </React.Fragment>
 
 };
+
+
 
 function createCanvas() {
     return <Canvas
@@ -179,8 +190,13 @@ function createCanvas() {
             camera.rotateX(Math.PI / 5);
         }}
     >
-        <App />
+
+        <Suspense fallback={<Spinner></Spinner>}>
+            <App />
+
+        </Suspense>
     </Canvas >
+
 }
 
 ReactDOM.render(
