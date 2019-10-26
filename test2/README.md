@@ -1,1 +1,1 @@
-See blog post [Creating a Draggable Shape with React Three Fiber](https://maxrohde.com/2019/10/19/creating-a-draggable-shape-with-react-three-fiber/)
+See blog post [Create and Drag Shapes with Three.js, React and Cannon.js](https://maxrohde.com/2019/10/23/create-and-drag-shapes-with-three-js-react-and-cannon-js/)
