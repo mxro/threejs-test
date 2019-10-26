@@ -64,6 +64,8 @@ function DraggableDodecahedron({ position: initialPosition }) {
             <dodecahedronBufferGeometry attach="geometry" />
             <meshLambertMaterial attach="material" map={texture} />
 
+            {/* <meshLambertMaterial attach="material" color={"yellow"} /> */}
+
         </mesh>
     )
 }

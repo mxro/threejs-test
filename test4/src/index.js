@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom"
 import * as CANNON from "cannon";
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useRef } from "react";
 import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
 import { Canvas, useThree, useFrame, useLoader } from "react-three-fiber"
 import * as THREE from 'three';
@@ -9,6 +9,7 @@ import { useCannon, Provider } from './useCannon';
 import useEventListener from '@use-it/event-listener';
 import DraggableDodecahedron from './DraggableDodecahedron.js';
 import { get3DPosition } from './position-utils.js';
+import { Vector2 } from "three";
 
 function Plane({ position, onPlaneClick, onCameraMoved }) {
     const { ref } = useCannon({ bodyProps: { mass: 0 } }, body => {
@@ -28,16 +29,16 @@ function Plane({ position, onPlaneClick, onCameraMoved }) {
         <mesh ref={ref} receiveShadow position={position}
             onClick={onPlaneClick}>
             <planeBufferGeometry attach="geometry" args={[10000, 10000]} />
-            {texture && 
+            {texture &&
                 <meshPhongMaterial attach="material" map={texture} />
             }
 
-            {/* <meshPhongMaterial attach="material" color={"#272727"} /> */}
+            {/* <meshPhongMaterial attach="material" color={"#55555"} /> */}
         </mesh>
     )
 }
 
-function Objects({ objects, addObject }) {
+function Objects({ objects }) {
     return <React.Fragment>
         {objects}
     </React.Fragment>;
@@ -53,13 +54,13 @@ function App() {
 
     const { mouse, camera } = useThree();
 
-
-    const [lightPosition, setLightPosition] = useState([0, -300, 500]);
-    const [lightQuaternion, setLightQuaternion] = useState([0, 0, 0, 0]);
+    const [lightPosition, setLightPosition] = useState([0, -160, 100]);
+    const [lightTargetPosition, setLightTargetPosition] = useState([0, 0, 0]);
     const onCameraMoved = (delta) => {
         const newLightPosition = delta.map((e, idx) => lightPosition[idx] + e);
         setLightPosition(newLightPosition);
-        setLightQuaternion([newLightPosition[0]+300, newLightPosition[1]-500, 0, 0]);
+        const newLightTargetPosition = [newLightPosition[0], newLightPosition[1] + 160, 0];
+        setLightTargetPosition(newLightTargetPosition);
     };
 
     const onPlaneClick = (e) => {
@@ -132,13 +133,24 @@ function App() {
         });
     });
 
-
+    // const lightRef = useRef();
+    // console.log(lightRef);
+    const lightTarget = new THREE.Mesh();
 
     return <React.Fragment >
-        <ambientLight intensity={0.2} />
+        <ambientLight intensity={0.1} />
         {/* <spotLight intensity={0.6} position={lightPosition} angle={Math.PI / 3} penumbra={1} /> */}
 
-        <spotLight intensity={0.9} position={lightPosition} quaternion={lightQuaternion} angle={Math.PI / 3} penumbra={1} />
+        <primitive object={lightTarget} position={lightTargetPosition} />
+        <spotLight
+            castShadow
+            intensity={0.8}
+            position={lightPosition}
+            angle={Math.PI / 8}
+            penumbra={1}
+            shadow-mapSize={new Vector2(2048 * 5, 2048 * 5)}
+            target={lightTarget}
+        />
         <Provider>
             <Suspense fallback={(e) => { alert('Cannot load: ' + e.message); }}>
                 <Objects objects={objects}>
@@ -153,11 +165,11 @@ function App() {
 
 function createCanvas() {
     return <Canvas
-        camera={{ position: [0, -2, -5] }}
+        camera={{ position: [0, 0, 5] }}
         onCreated={({ gl, camera }) => {
             gl.shadowMap.enabled = true;
             gl.shadowMap.type = THREE.PCFSoftShadowMap;
-            camera.lookAt([0,0,0]);
+            camera.rotateX(Math.PI / 5);
         }}
     >
         <App />
