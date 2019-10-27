@@ -2,7 +2,6 @@ import * as CANNON from "cannon";
 import React, { useState} from "react";
 import { useThree, useFrame, useLoader } from "react-three-fiber"
 import { useDrag } from "react-use-gesture";
-import * as THREE from 'three';
 import "./index.css"
 import { useCannon } from './useCannon';
 import { get3DPosition } from './position-utils.js';
@@ -45,8 +44,6 @@ function DraggableDodecahedron({ position: initialPosition, material }) {
         }
     });
 
-
-    
     return (
         <mesh ref={ref} castShadow position={position} quaternion={quaternion} {...bind()}
             onClick={e => {
@@ -56,8 +53,6 @@ function DraggableDodecahedron({ position: initialPosition, material }) {
         >
 
             <dodecahedronBufferGeometry attach="geometry" />
-           
-
         </mesh>
     )
 }
