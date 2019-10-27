@@ -165,10 +165,8 @@ function createCanvas() {
             camera.rotateX(Math.PI / 5);
         }}
     >
-
-        <Suspense fallback={<Spinner></Spinner>}>
+        <Suspense fallback={<Suspense fallback={null}><Spinner></Spinner></Suspense>}>
             <App />
-
         </Suspense>
     </Canvas >
 
