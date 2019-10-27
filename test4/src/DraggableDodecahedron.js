@@ -1,6 +1,5 @@
 import * as CANNON from "cannon";
 import React, { useState} from "react";
-import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
 import { useThree, useFrame, useLoader } from "react-three-fiber"
 import { useDrag } from "react-use-gesture";
 import * as THREE from 'three';

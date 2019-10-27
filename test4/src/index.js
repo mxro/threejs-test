@@ -1,42 +1,17 @@
 import ReactDOM from "react-dom"
-import * as CANNON from "cannon";
 import React, { useState, Suspense } from "react";
 import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
 import { Canvas, useThree, useFrame, useLoader, useResource } from "react-three-fiber"
 import * as THREE from 'three';
 import "./index.css"
-import { useCannon, Provider } from './useCannon';
+import { Provider } from './useCannon';
 import useEventListener from '@use-it/event-listener';
+import Plane from './Plane.js';
 import DraggableDodecahedron from './DraggableDodecahedron.js';
 import Spinner from './Spinner.js';
 import { get3DPosition } from './position-utils.js';
 import { Vector2, Vector3 } from "three";
 
-function Plane({ position, onPlaneClick }) {
-    const { ref } = useCannon({ bodyProps: { mass: 0 } }, body => {
-        body.addShape(new CANNON.Plane())
-        body.position.set(...position)
-    });
-
-    const [texture] = useLoader(TextureLoader, 'textures/grasslight-big.jpg');
-
-    if (texture) {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(1500, 1500);
-        texture.anisotropy = 16;
-    }
-
-    return (
-        <mesh ref={ref} receiveShadow position={position}
-            onClick={onPlaneClick}>
-            <planeBufferGeometry attach="geometry" args={[10000, 10000]} />
-            {texture &&
-                <meshPhongMaterial attach="material" map={texture} />
-            }
-
-        </mesh>
-    )
-}
 
 function Objects({ objects }) {
     return <React.Fragment>
