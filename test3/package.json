@@ -10,7 +10,7 @@
     "react-scripts": "3.2.0",
     "react-three-fiber": "3.0.0",
     "react-use-gesture": "6.0.2-beta.1",
-    "three": "0.125.0"
+    "three": "0.137.0"
   },
   "devDependencies": {
     "surge": "^0.21.3"
